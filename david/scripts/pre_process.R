@@ -16,7 +16,53 @@ response = 'TARGET'
 
 
 y = train[,response,with=FALSE]
-#train[,response:=NULL,with=FALSE]
+train[,response:=NULL,with=FALSE]
+
+
+
+##### 0 count per line
+count0 <- function(x) {
+  return( sum(x == 0) )
+}
+train[,n0:=apply(.SD, 1, FUN=count0)]
+test[,n0:=apply(.SD, 1, FUN=count0)]
+
+##### Removing constant features
+cat("\n## Removing the constants features.\n")
+for (f in names(train)) {
+  if (length(unique(train[[f]])) == 1) {
+    cat(f, "is constant in train. We delete it.\n")
+    train[,(f):=NULL]
+    test[,(f):=NULL]
+  }
+}
+
+##### Removing identical features
+features_pair <- combn(names(train), 2, simplify = F)
+toRemove <- c()
+
+for(pair in features_pair) {
+  f1 <- pair[1]
+  f2 <- pair[2]
+  
+  if (!(f1 %in% toRemove) & !(f2 %in% toRemove)) {
+    if (all(train[[f1]] == train[[f2]])) {
+      cat(f1, "and", f2, "are equals.\n")
+      toRemove <- c(toRemove, f2)
+    }
+  }
+}
+
+feature.names <- setdiff(names(train), toRemove)
+
+train <- train[, feature.names,with=FALSE]
+
+feature.names <- setdiff(names(test), toRemove)
+
+test <- test[, feature.names,with=FALSE]
+
+
+
 
 
 # 
@@ -276,9 +322,9 @@ setkeyv(test,id_col)
 
 
 
-write_csv(train[,setdiff(colnames(train),response),with=FALSE],path='dataProcessed/X_train_1hot.csv')
-write_csv(test[,setdiff(colnames(test),response),with=FALSE],path='dataProcessed/X_test_1hot.csv')
-write_csv(train[,c(id_col,response),with=FALSE],path='dataProcessed/y_train.csv')
+write_csv(train,path='dataProcessed/X_train_1hot.csv')
+write_csv(test,path='dataProcessed/X_test_1hot.csv')
+write_csv(y,path='dataProcessed/y_train.csv')
 write_csv(submission,path='dataProcessed/y_test.csv')
 
 

@@ -16,7 +16,7 @@
   
   metric = 'my.auc'#'NormalizedGini'#'MultiLogLoss'#'perc_correct'
   
-  doCV=TRUE
+  doCV=FALSE
   doFull = TRUE
   
   
