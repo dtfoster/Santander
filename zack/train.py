@@ -4,9 +4,10 @@ import numpy as np
 import csv
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier, GradientBoostingClassifier
-from xgboost import XGBClassifier
+import xgboost as xgb
 from sklearn.cross_validation import StratifiedKFold
 from sklearn import ensemble
+from sklearn import preprocessing
 
 print('Load data...')
 train = pd.read_csv("../raw/train.csv")
@@ -18,25 +19,50 @@ test = pd.read_csv("../raw/test.csv")
 id_test = test['ID'].values
 test = test.drop(['ID'], axis=1)
 
-cross_val = StratifiedKFold(target, n_folds=4, shuffle=False, random_state=2016)
+for f in train.columns:
+    if train[f].dtype=='object':
+        lbl = preprocessing.LabelEncoder()
+        lbl.fit(list(train[f].values))
+        train[f] = lbl.transform(list(train[f].values))
 
-X_train = np.array(train)
-X_test = np.array(test)
+for f in test.columns:
+    if test[f].dtype=='object':
+        lbl = preprocessing.LabelEncoder()
+        lbl.fit(list(test[f].values))
+        test[f] = lbl.transform(list(test[f].values))
+
+train.fillna((-999), inplace=True)
+test.fillna((-999), inplace=True)
+
+train=np.array(train)
+test=np.array(test)
+train = train.astype(float)
+test = test.astype(float)
 
 print('Training...')
 
-extc = ExtraTreesClassifier(n_estimators=850,max_features= 60,criterion= 'entropy',min_samples_split= 4,
-                            max_depth= 40, min_samples_leaf= 2, n_jobs = 2)
+watchlist = [(test, 'eval'), (train, 'train')]
 
-rfc = RandomForestClassifier(n_estimators=850,max_features= 60,criterion= 'entropy',min_samples_split= 4,
-                            max_depth= 40, min_samples_leaf= 2, n_jobs = 2)
+params = { "objective": "binary:logistic",
+                "booster": "gbtree",
+                "eval_metric": "auc",
+                "eta": 0.02,
+                "max_depth": 6,
+                "subsample": 0.9,
+                "colsample_bytree": 0.85}
 
-gbc = GradientBoostingClassifier(n_estimators=850,max_features= 60, min_samples_split= 4,
-                            max_depth= 40, min_samples_leaf= 2)
+param = {'max_depth':2, 'eta':1, 'silent':1, 'objective':'binary:logistic' }
 
-xgb = XGBClassifier(learning_rate=0.01, max_depth=40, n_estimators=500)
+train = xgb.DMatrix(train)
 
-models = {'extc': extc, 'rfc': rfc, 'gbc': gbc, 'xgb': xgb}
+xgb = xgb.train(param, train, 500, watchlist)
+
+
+exit
+
+cross_val = StratifiedKFold(target, n_folds=4, shuffle=False, random_state=2016)
+
+models = {'xgb': xgb}
 
 for model_name, model in models.iteritems():
 	#validation
