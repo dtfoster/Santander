@@ -1,11 +1,12 @@
 import pandas as pd
-
+from xgbUtilis import xgb_make_model_with_stopping
 import numpy as np
+from zmodel.xgb import make_model_with_stopping
 import csv
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier, GradientBoostingClassifier
 import xgboost as xgb
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold, train_test_split
 from sklearn import ensemble
 from sklearn import preprocessing
 
@@ -39,46 +40,18 @@ test=np.array(test)
 train = train.astype(float)
 test = test.astype(float)
 
-print('Training...')
-
-watchlist = [(test, 'eval'), (train, 'train')]
-
 params = { "objective": "binary:logistic",
                 "booster": "gbtree",
                 "eval_metric": "auc",
-                "eta": 0.02,
-                "max_depth": 6,
-                "subsample": 0.9,
-                "colsample_bytree": 0.85}
+                "eta": 0.0202,
+                "max_depth": 5,
+                "subsample": 0.6815,
+                "colsample_bytree": 0.701}
 
-param = {'max_depth':2, 'eta':1, 'silent':1, 'objective':'binary:logistic' }
+model = make_model_with_stopping(train, target, params)
 
-train = xgb.DMatrix(train)
+test = xgb.DMatrix(test)
 
-xgb = xgb.train(param, train, 500, watchlist)
-
-
-exit
-
-cross_val = StratifiedKFold(target, n_folds=4, shuffle=False, random_state=2016)
-
-models = {'xgb': xgb}
-
-for model_name, model in models.iteritems():
-	#validation
-	val_preds = []
-	for train_index, test_index in cross_val:
-		val_X_train, val_X_test = X_train[train_index], X_train[test_index]
-		val_y_train, val_y_test = target[train_index], target[test_index]
-		model.fit(val_X_train, val_y_train)
-		val_pred = model.predict_proba(val_X_test.tolist())
-		if len(val_preds):
-			val_preds = np.concatenate((val_preds, val_pred), axis=0)
-		else:
-			val_preds = val_pred
-	pd.DataFrame({"ID": id_train, "PredictedProb": val_preds[:,1]}).to_csv('output/validation/%s_val_pred.csv'%(model_name), index=False)
-
-	#prediction
-	model.fit(X_train,target)
-	pred = model.predict_proba(X_test)
-	pd.DataFrame({"ID": id_test, "PredictedProb": pred[:,1]}).to_csv('output/submissions/%s_pred.csv'%(model_name), index=False)
+preds = model.predict(test)
+print preds
+pd.DataFrame({"ID": id_test, "TARGET": preds}).to_csv('output/submissions/%s_pred.csv'%("xgb"), index=False)
