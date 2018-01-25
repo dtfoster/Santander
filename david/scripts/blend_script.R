@@ -1,7 +1,6 @@
 #load('postLoad2.RData')
 
 set.seed(1066)
-setwd("C:/Users/david.foster/Desktop/GitHub/Data Science/Springleaf")
 
 library(caret)
 library(data.table)
@@ -17,21 +16,21 @@ source('./scripts/lib/blendModels.R')
 source('./scripts/lib/chooseBestBlendModel.R')
 
 id_col = 'ID'
-response_col = 'target'
+response_col = 'TARGET'
 response_type = 'binary'
 metric = 'my.auc'
 toRemove = c()
 
 l=5
 
-filenames_train <- list.files("./toBlend", pattern="*.csv", full.names=FALSE)
-filenames_test <- list.files("./submissions/base/csv", pattern="*.csv", full.names=FALSE)
+filenames_train <- list.files("./toBlend/train", pattern="*.csv", full.names=FALSE)
+filenames_test <- list.files("./toBlend/test", pattern="*.csv", full.names=FALSE)
 
 filenames = intersect(filenames_train,filenames_test)
 
 
-id_train = loader_X(paste0('./toBlend/',filenames[1]),id_col,toRemove)[[1]]
-id_test = loader_X(paste0('./submissions/base/csv/',filenames[1]),id_col,toRemove)[[1]]
+id_train = loader_X(paste0('./toBlend/train/',filenames[1]),id_col,toRemove)[[1]]
+id_test = loader_X(paste0('./toBlend/test/',filenames[1]),id_col,toRemove)[[1]]
 
 
 blend_train = data.table(id_train)
@@ -41,7 +40,7 @@ colnames(blend_test) = id_col
 
 for (file in filenames){
   
-  d = loader_X(paste0('./toBlend/',file),id_col,toRemove)[[2]]
+  d = loader_X(paste0('./toBlend/train/',file),id_col,toRemove)[[2]]
   setnames(d,file) 
   if (nrow(d) == length(id_train)){
  
@@ -58,7 +57,7 @@ for (file in filenames){
 
 for (file in filenames){
   
-  d = loader_X(paste0('./submissions/base/csv/',file),id_col,toRemove)[[2]]
+  d = loader_X(paste0('./toBlend/test/',file),id_col,toRemove)[[2]]
   setnames(d,file) 
   if (file %in% names(blend_train)){
     blend_test = cbind(blend_test,d)
@@ -80,8 +79,8 @@ blend_test[,(id_col):=NULL]
 
 
 
-blend_train = cbind(X_train,blend_train)
-blend_test = cbind(X_test,blend_test)
+#blend_train = cbind(X_train,blend_train)
+#blend_test = cbind(X_test,blend_test)
 
 
 
@@ -101,7 +100,7 @@ blend_evaluations = data.frame(model_id=numeric(),model = character(),score=nume
 blend_model_bank = list()
 
 
-blend_modelsToChange = c(3)
+blend_modelsToChange = c(3:34)
 
 for (model_num in blend_modelsToChange){
   cat('\n\n')
@@ -170,8 +169,8 @@ write.csv(out,file=path,row.names=FALSE)
 
 
  
- names <- colnames(blend_train)
- importance_matrix <- xgb.importance(names, model = blendModel)
- xgb.plot.importance(importance_matrix)
+ #names <- colnames(blend_train)
+ #importance_matrix <- xgb.importance(names, model = blendModel)
+ #xgb.plot.importance(importance_matrix)
 
 

@@ -66,6 +66,7 @@ out = loader_X(paste0('./dataProcessed/X_test_',dataset,'.csv'),id_col,toRemove)
 id_test =  out[[1]] 
 X_test = out[[2]]
 
+rm(out)
 gc()
 
 

@@ -47,8 +47,9 @@ formulaSetter = function(m,X,y){
     #print(length(label))
     
     
-    samp = sample(1:nrow(X),floor(nrow(X)/8)) #1:3000 #
+    samp = sample(1:nrow(X),floor(nrow(X)/10)) #1:3000 
     X_new = data.matrix(X)
+    #data = xgb.DMatrix(X_new, label=label)
     data = xgb.DMatrix(X_new[-samp,], label=label[-samp])
     eval = xgb.DMatrix(X_new[samp,], label=label[samp])
 
@@ -56,20 +57,22 @@ formulaSetter = function(m,X,y){
     gc()
     
     out[['data']] = data
-    out[['watchlist']] = list(eval = eval, train = data)
-    if (response_type =='continuous'){
-      out[['feval']] = evalgini
-    }else if (response_type == 'discrete'){
-      out[['feval']] = MultiLogLoss_XG
-      
-    }else if (response_type == 'binary'){
-      if (binary_type =='absolute'){
-      out[['feval']] = perc_correct_XG 
-      }else{
-      out[['feval']] = my.auc_XG
-      }
-      
-    }
+    out[['watchlist']] = list(eval = eval, train = data) #list(train=data) #
+    #out[['watchlist']] = list(train = data) #list(t
+    
+#     if (response_type =='continuous'){
+#       out[['feval']] = evalgini
+#     }else if (response_type == 'discrete'){
+#       out[['feval']] = MultiLogLoss_XG
+#       
+#     }else if (response_type == 'binary'){
+#       if (binary_type =='absolute'){
+#       out[['feval']] = perc_correct_XG 
+#       }else{
+#       out[['feval']]['eval_metric'] = 'auc'
+#       }
+#       
+#     }
     
   }else if(m[['model_type']] %in% c('h2o.deeplearning')){
     

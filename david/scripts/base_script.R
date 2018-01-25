@@ -16,7 +16,7 @@
   
   metric = 'my.auc'#'NormalizedGini'#'MultiLogLoss'#'perc_correct'
   
-  doCV=FALSE
+  doCV=TRUE
   doFull = TRUE
   
   
@@ -24,7 +24,7 @@
   models = getModels()
   num_models = length(models)
   
-  modelsToChange = c(3)
+  modelsToChange = c(1)
   
   for (model_num in modelsToChange){
     
@@ -53,7 +53,8 @@
       rm(out);gc()
       
       cat('Model',model_num, 'of',num_models,':',name)
-      preds = array(NA, dim = c(length(y_train),length(classes),k))
+      preds = array(NA, dim = c(length(id_train),length(classes),k))
+      preds_test = array(NA, dim = c(length(id_test),length(classes),k))
       #setnames(preds,classes)
       fold_num = 0
       cat('\nFolds (',k,') :')
@@ -68,15 +69,19 @@
         score = evaluator(y_train[test_fold],preds_fold,metric)
         cat(' Score:',score)
         preds[test_fold,,fold]  = as.matrix(preds_fold)
+        
+        preds_fold_test = predictor(m,model,X_test[,samp_cols,with=FALSE])
+        preds_test[,,fold]  = as.matrix(preds_fold_test)
+      
         gc()
       } 
       
       preds = data.table(apply(preds,c(1,2),mean,na.rm=TRUE))
       setnames(preds,classes)
       
-       names = paste(name,classes,sep='_')
+      # names = paste(name,classes,sep='_')
      # blend_train[,names] = preds 
-       cat('\nScoring the predictions...')
+      cat('\nScoring the predictions...')
       score = evaluator(y_train,preds,metric)
       models[[model_num]][['score']] = score
       evaluations[model_num,c('model_id','model','score')] = c(model_num,name,score)
@@ -85,8 +90,17 @@
       
       out = data.table(id_train,preds)
       setnames(out,c(id_col,classes))
-      cat('\nWriting out the dataset to blend...')
-      write.csv(out,file=paste0('./toBlend/',sprintf("%.6f", round(score,6)),' ',time_stamp,' ',name,'.csv'),row.names=FALSE)
+      cat('\nWriting out the train dataset to blend...')
+      write.csv(out,file=paste0('./toBlend/train/',sprintf("%.6f", round(score,6)),' ',time_stamp,' ',name,'.csv'),row.names=FALSE)
+      
+      
+      preds_test = data.table(apply(preds_test,c(1,2),mean,na.rm=TRUE))
+      setnames(preds_test,classes)
+      
+      out = data.table(id_test,preds_test)
+      setnames(out,c(id_col,classes))
+      cat('\nWriting out the test dataset to blend...')
+      write.csv(out,file=paste0('./toBlend/test/',sprintf("%.6f", round(score,6)),' ',time_stamp,' ',name,'.csv'),row.names=FALSE)
       
       if (!doFull){
         train_score = 0
@@ -145,7 +159,8 @@
     }
     
   
-      
+    cat('Saving the model...')
+  #  save(model,file='./models/model.rdata')
     
       
   }

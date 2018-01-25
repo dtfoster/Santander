@@ -1,7 +1,7 @@
 getModels = function(){
 
   
-  #library(randomForest)
+  library(randomForest)
   #library(nnet)
   #library(glmnet)
   library(xgboost)
@@ -16,15 +16,15 @@ models = list()
  models[[n]][['num']] = n
  models[[n]][['name']] = 'RF2'
  models[[n]][['model_type']] = 'randomForest'
- models[[n]][['numrows']] = 0 #20000
+ models[[n]][['numrows']] = 0 #10000
  models[[n]][['numcols']] = 0
  models[[n]][['seed']] = 1
  models[[n]][['args']] = list(5
-                              ,100
-                              ,1 #/ 10000  #nrow(X_train)
-                              ,3 #10
-                              #,1000
+                              ,20
+                              ,1000 #/ 10000  #nrow(X_train)
+                              ,100 #10
                               ,TRUE
+                              #,1000
                               )
  names(models[[n]][['args']]) = c('do.trace'
                                   ,'ntree'
@@ -59,23 +59,23 @@ models = list()
  
  
  
- #for ( max_depth in c(5,8,11)){
-#   for ( eta in c(0.005,0.01,0.02)){
+ for ( max_depth in c(5,6,7)){
+   for ( eta in c(0.01,0.02,0.05)){
 
 # for ( min_child_weight in c(1, 10,100)){
 #   for ( num_parallel_tree in c(20,50)){
-# for ( subsample in c(0.6,0.8)){
-#     for ( colsample_bytree in c(0.5,0.7)){
+ for ( subsample in c(0.6,0.7)){
+     for ( colsample_bytree in c(0.6,0.7)){
 #       for ( objective in c('rank:pairwise' ,'reg:linear')){
  #for ( seed in c(1:10)){
        
 
- eta = 0.02
+ #eta = 0.02
  gamma = 0
- max_depth = 6
+ #max_depth = 5
  min_child_weight = 1
- subsample = 0.9
- colsample_bytree = 0.85
+ #subsample = 0.6
+ #colsample_bytree = 0.7
  num_parallel_tree = 1
  objective = 'binary:logistic'#'multi:softprob' #'binary:logistic' #
 
@@ -89,8 +89,9 @@ models[[n]][['name']] = paste0('XGB',n)
 models[[n]][['model_type']] = 'xgb.train'
 models[[n]][['numrows']] = 0
 models[[n]][['numcols']] = 0
-models[[n]][['seed']] = 7#seed
-models[[n]][['args']] = list(list('eta'=eta
+models[[n]][['seed']] = 1234#seed
+models[[n]][['args']] = list(list(
+                                  'eta'=eta
                                   , 'gamma'= gamma
                                   ,'max_depth'=max_depth
                                   ,'min_child_weight'= min_child_weight
@@ -98,16 +99,20 @@ models[[n]][['args']] = list(list('eta'=eta
                                   ,'colsample_bytree'= colsample_bytree
                                   ,'num_parallel_tree' = num_parallel_tree
                                   , 'objective'=objective
-                                  #,'eval_metric'= 'auc'
+                                  ,'eval_metric'= 'auc'
                                   #, 'num_class'=num_classes
                                   
-),1,TRUE,100000,100,1)
-names(models[[n]][['args']]) = c('param','verbose','maximize','nrounds','early.stop.round','print.every.n')
+),1,TRUE,50000
+,100
+,1)
+names(models[[n]][['args']]) = c('param','verbose','maximize','nrounds'
+                                 ,'early.stop.round'
+                                 ,'print.every.n')
 
-#}
-#    }
-#  }
-#  }
+}
+    }
+  }
+  }
 #}
 
 

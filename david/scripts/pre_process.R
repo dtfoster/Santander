@@ -15,7 +15,7 @@ id_col = 'ID'
 response = 'TARGET'
 
 
-y = train[,response,with=FALSE]
+y = train[,c(id_col,response),with=FALSE]
 train[,response:=NULL,with=FALSE]
 
 
